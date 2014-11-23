@@ -1,0 +1,32 @@
+{
+  "name": "vercastDB",
+  "version": "0.1.0",
+  "description": "A versionable key/value store with incremental map/reduce.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha -C -R dot --harmony"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brosenan/vercastDB.git"
+  },
+  "keywords": [
+    "database",
+    "nosql",
+    "map-reduce",
+    "key-value-store"
+  ],
+  "author": "Boaz Rosenan <brosenan@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brosenan/vercastDB/issues"
+  },
+  "homepage": "https://github.com/brosenan/vercastDB",
+  "dependencies": {
+    "asyncgen": "^1.0.6",
+    "vercast": "^0.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.0.1"
+  }
+}

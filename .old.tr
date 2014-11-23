@@ -1,0 +1,16 @@
+
+    compareKeys(key1, key2) should compare strings lexicographically
+  ․ compareKeys(key1, key2) should compare strings lexicographically
+    compareKeys(key1, key2) should compare numbers numerically
+  ․ compareKeys(key1, key2) should compare numbers numerically
+    compareKeys(key1, key2) should consider an array as more than anything else
+  ․ compareKeys(key1, key2) should consider an array as more than anything else
+    compareKeys(key1, key2) should compare arrays lexicographically
+  ․ compareKeys(key1, key2) should compare arrays lexicographically
+    compareKeys(key1, key2) should treat prefix arrays as less than longer arrays
+  ․ compareKeys(key1, key2) should treat prefix arrays as less than longer arrays
+    compareKeys(key1, key2) should recurse to compare nested arrays
+  ․ compareKeys(key1, key2) should recurse to compare nested arrays
+
+  6 passing (11ms)
+
