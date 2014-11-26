@@ -1,6 +1,7 @@
 "use strict";
 var asyncgen = require('asyncgen');
 var crypto = require('crypto');
+var assert = require('assert');
 
 function hash(value) {
     var h = crypto.createHash('sha256');
@@ -187,4 +188,22 @@ exports._keys = function*(ctx, p, u) {
 	    start: start,
 	}, u)).r);
     }
+};
+
+exports._validate = function*(ctx, p, u) {
+    if(this.key === null) {
+	return;
+    }
+    var left = (yield* ctx.trans(this.left, {_type: '_get'})).r;
+    var right = (yield* ctx.trans(this.right, {_type: '_get'})).r;
+    if(left.key !== null) {
+	assert(this.key > left.key, 'Key order: left');
+	assert(this.weight > left.weight, 'Heap order: left');
+    }
+    if(right.key !== null) {
+	assert(this.key < right.key, 'Key order: right');
+	assert(this.weight > right.weight, 'Heap order: right');
+    }
+    yield* ctx.trans(this.left, p, u);
+    yield* ctx.trans(this.right, p, u);
 };

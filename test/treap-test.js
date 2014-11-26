@@ -22,6 +22,7 @@ describe('Treap', function(){
 	yield* otb.trans({_type: 'set', _key: 'bar', from: '', to: 'y'});
 	assert.equal(yield* otb.trans({_type: 'get', _key: 'foo'}), 'x');
 	assert.equal(yield* otb.trans({_type: '_count'}), 2);
+	yield* otb.trans({_type: '_validate'});
     }));
     it('should not count nodes containing values that match the default value', asyncgen.async(function*(){
 	yield* otb.trans({_type: 'set', _key: 5, from: '', to: 'x'});
@@ -53,6 +54,7 @@ describe('Treap', function(){
 					     _key: i, 
 					     from: i*2, 
 					     to: ''})).v;
+	    yield* s.ostore.trans(s.v, {_type: '_validate'});
 	}
 	depth = (yield* s.ostore.trans(s.v, {_type: '_depth'})).r;
 	assert.equal(depth, 0);
@@ -80,7 +82,5 @@ describe('Treap', function(){
 						    start: 90})).r;
 	    assert.deepEqual(keys, [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
 	}));
-
     });
-
 });

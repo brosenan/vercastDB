@@ -80,6 +80,7 @@ function* (){
 	yield* otb.trans({_type: 'set', _key: 'bar', from: '', to: 'y'});
 	assert.equal(yield* otb.trans({_type: 'get', _key: 'foo'}), 'x');
 	assert.equal(yield* otb.trans({_type: '_count'}), 2);
+	yield* otb.trans({_type: '_validate'});
 ```
 
 should not count nodes containing values that match the default value.
@@ -105,6 +106,7 @@ function* (){
 					     _key: i, 
 					     from: i*2, 
 					     to: ''})).v;
+	    yield* s.ostore.trans(s.v, {_type: '_validate'});
 	}
 	depth = (yield* s.ostore.trans(s.v, {_type: '_depth'})).r;
 	assert.equal(depth, 0);
