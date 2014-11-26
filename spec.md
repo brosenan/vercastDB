@@ -1,6 +1,7 @@
 # TOC
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
    - [Treap](#treap)
+     - [_keys](#treap-_keys)
 <a name=""></a>
  
 <a name="comparekeyskey1-key2"></a>
@@ -96,26 +97,52 @@ should be mostly balanced.
 
 ```js
 function* (){
-	var ostore = new vercast.SimpleObjectStore(
-	    new vercast.ObjectDispatcher(dispMap),
-	    new vercast.DummyKeyValueStore());
-	var v = yield* ostore.init('Treap', {elementType: 'atom',
-					     args: {value: ''}});
-	for(let i = 0; i < 100; i++) {
-	    v = (yield* ostore.trans(v, {_type: 'set', 
-				      _key: i, 
-				      from: '', 
-				      to: i*2})).v;
-	}
-	var depth = (yield* ostore.trans(v, {_type: '_depth'})).r;
+	var s = yield* createOStore();
+	var depth = (yield* s.ostore.trans(s.v, {_type: '_depth'})).r;
 	assert(depth < 20, 'the depth should be less than the size');
 	for(let i = 0; i < 100; i++) {
-	    v = (yield* ostore.trans(v, {_type: 'set', 
-					 _key: i, 
-					 from: i*2, 
-					 to: ''})).v;
+	    s.v = (yield* s.ostore.trans(s.v, {_type: 'set', 
+					     _key: i, 
+					     from: i*2, 
+					     to: ''})).v;
 	}
-	depth = (yield* ostore.trans(v, {_type: '_depth'})).r;
+	depth = (yield* s.ostore.trans(s.v, {_type: '_depth'})).r;
 	assert.equal(depth, 0);
+```
+
+<a name="treap-_keys"></a>
+## _keys
+should return a sorted list of the keys in the tree.
+
+```js
+function* (){
+	    for(let i = 0; i < 4; i++) {
+		yield* otb.trans({_type: 'set',
+				  _key: i,
+				  from: '',
+				  to: i*2});
+	    }
+	    var keys = yield* otb.trans({_type: '_keys'});
+	    assert.deepEqual(keys, [0, 1, 2, 3]);
+```
+
+should not give more results then the given limit, if provided.
+
+```js
+function* (){
+	    var s = yield* createOStore();
+	    var keys = (yield* s.ostore.trans(s.v, {_type: '_keys',
+						    limit: 3})).r;
+	    assert.deepEqual(keys, [0, 1, 2]);
+```
+
+should start at the given start position if given.
+
+```js
+function* (){
+	    var s = yield* createOStore();
+	    var keys = (yield* s.ostore.trans(s.v, {_type: '_keys',
+						    start: 90})).r;
+	    assert.deepEqual(keys, [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
 ```
 

@@ -17,6 +17,12 @@
   ․ Treap should not count nodes containing values that match the default value
     Treap should be mostly balanced
   ․ Treap should be mostly balanced
+    Treap _keys should return a sorted list of the keys in the tree
+  ․ Treap _keys should return a sorted list of the keys in the tree
+    Treap _keys should not give more results then the given limit, if provided
+  ․ Treap _keys should not give more results then the given limit, if provided
+    Treap _keys should start at the given start position if given
+  ․ Treap _keys should start at the given start position if given
 
-  9 passing (592ms)
+  12 passing (1s)
 

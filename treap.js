@@ -29,19 +29,9 @@ exports._default = function*(ctx, p, u) {
 	this.left = yield* ctx.init(this._type, {defaultValue: this.defaultValue});
 	this.right = this.left;
 	field = 'value';
-    } else if(this.key < p._key) {
-	if(this.left === null) {
-	    this.left = yield* ctx.init(this._type, {defaultValue: this.defaultValue,
-						  key: p._key,
-						  value: this.defaultValue});
-	}
-	field = 'left';
     } else if(this.key > p._key) {
-	if(this.right === null) {
-	    this.right = yield* ctx.init(this._type, {defaultValue: this.defaultValue,
-						  key: p._key,
-						  value: this.defaultValue});
-	}
+	field = 'left';
+    } else if(this.key < p._key) {
 	field = 'right';
     } else { // ===
 	field = 'value';
@@ -166,10 +156,35 @@ exports._depth = function*(ctx, p, u) {
     if(this.key === null) {
 	return 0;
     } else {
-	var childDepths = yield* asyncgen.parallel([
+	var childDepths = (yield* asyncgen.parallel([
 	    ctx.trans(this.left, p, u),
 	    ctx.trans(this.right, p, u),
-	]);
-	return Math.max.apply(undefined, childDepths.map(function(x) { return x.r;})) + 1;
+	])).map(function(x) { return x.r;});
+	return Math.max.apply(undefined, childDepths) + 1;
+    }
+};
+
+exports._keys = function*(ctx, p, u) {
+    if(this.key === null) {
+	return [];
+    } else {
+	var start = p.start || 0;
+	var keys = (yield* ctx.trans(this.left, p, u)).r;
+	start -= this.leftCount;
+	if('limit' in p && keys.length === p.limit) {
+	    return keys;
+	}
+	if(start <= 0) {
+	    keys.push(this.key);
+	}
+	start -= 1;
+	if('limit' in p && keys.length === p.limit) {
+	    return keys;
+	}
+	return keys.concat((yield* ctx.trans(this.right, {
+	    _type: p._type,
+	    limit: p.limit - keys.length,
+	    start: start,
+	}, u)).r);
     }
 };

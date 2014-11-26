@@ -30,7 +30,7 @@ describe('Treap', function(){
 	yield* otb.trans({_type: 'set', _key: 5, from: 'x', to: ''});
 	assert.equal(yield* otb.trans({_type: '_count'}), 1);
     }));
-    it('should be mostly balanced', asyncgen.async(function*(){
+    function* createOStore() {
 	var ostore = new vercast.SimpleObjectStore(
 	    new vercast.ObjectDispatcher(dispMap),
 	    new vercast.DummyKeyValueStore());
@@ -38,19 +38,49 @@ describe('Treap', function(){
 					     args: {value: ''}});
 	for(let i = 0; i < 100; i++) {
 	    v = (yield* ostore.trans(v, {_type: 'set', 
-				      _key: i, 
-				      from: '', 
-				      to: i*2})).v;
+					   _key: i, 
+					   from: '', 
+					   to: i*2})).v;
 	}
-	var depth = (yield* ostore.trans(v, {_type: '_depth'})).r;
+	return {ostore: ostore, v: v};
+    }
+    it('should be mostly balanced', asyncgen.async(function*(){
+	var s = yield* createOStore();
+	var depth = (yield* s.ostore.trans(s.v, {_type: '_depth'})).r;
 	assert(depth < 20, 'the depth should be less than the size');
 	for(let i = 0; i < 100; i++) {
-	    v = (yield* ostore.trans(v, {_type: 'set', 
-					 _key: i, 
-					 from: i*2, 
-					 to: ''})).v;
+	    s.v = (yield* s.ostore.trans(s.v, {_type: 'set', 
+					     _key: i, 
+					     from: i*2, 
+					     to: ''})).v;
 	}
-	depth = (yield* ostore.trans(v, {_type: '_depth'})).r;
+	depth = (yield* s.ostore.trans(s.v, {_type: '_depth'})).r;
 	assert.equal(depth, 0);
     }));
+    describe('_keys', function(){
+	it('should return a sorted list of the keys in the tree', asyncgen.async(function*(){
+	    for(let i = 0; i < 4; i++) {
+		yield* otb.trans({_type: 'set',
+				  _key: i,
+				  from: '',
+				  to: i*2});
+	    }
+	    var keys = yield* otb.trans({_type: '_keys'});
+	    assert.deepEqual(keys, [0, 1, 2, 3]);
+	}));
+	it('should not give more results then the given limit, if provided', asyncgen.async(function*(){
+	    var s = yield* createOStore();
+	    var keys = (yield* s.ostore.trans(s.v, {_type: '_keys',
+						    limit: 3})).r;
+	    assert.deepEqual(keys, [0, 1, 2]);
+	}));
+	it('should start at the given start position if given', asyncgen.async(function*(){
+	    var s = yield* createOStore();
+	    var keys = (yield* s.ostore.trans(s.v, {_type: '_keys',
+						    start: 90})).r;
+	    assert.deepEqual(keys, [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
+	}));
+
+    });
+
 });
