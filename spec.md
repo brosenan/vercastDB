@@ -1,5 +1,6 @@
 # TOC
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
+   - [Treap](#treap)
 <a name=""></a>
  
 <a name="comparekeyskey1-key2"></a>
@@ -65,5 +66,56 @@ should recurse to compare nested arrays.
 ```js
 assert.equal(vdb.compareKeys(['a', 'b', '~'], ['a', 'b', []]), -1);
 assert.equal(vdb.compareKeys(['a', 'b', []], ['a', 'b', '~']), 1);
+```
+
+<a name="treap"></a>
+# Treap
+should apply patches to different objects, by the patch's _key attribute.
+
+```js
+function* (){
+	yield* otb.trans({_type: 'set', _key: 'foo', from: '', to: 'x'});
+	assert.equal(yield* otb.trans({_type: '_count'}), 1);
+	yield* otb.trans({_type: 'set', _key: 'bar', from: '', to: 'y'});
+	assert.equal(yield* otb.trans({_type: 'get', _key: 'foo'}), 'x');
+	assert.equal(yield* otb.trans({_type: '_count'}), 2);
+```
+
+should not count nodes containing values that match the default value.
+
+```js
+function* (){
+	yield* otb.trans({_type: 'set', _key: 5, from: '', to: 'x'});
+	yield* otb.trans({_type: 'set', _key: 7, from: '', to: 'y'});
+	assert.equal(yield* otb.trans({_type: '_count'}), 2);
+	yield* otb.trans({_type: 'set', _key: 5, from: 'x', to: ''});
+	assert.equal(yield* otb.trans({_type: '_count'}), 1);
+```
+
+should be mostly balanced.
+
+```js
+function* (){
+	var ostore = new vercast.SimpleObjectStore(
+	    new vercast.ObjectDispatcher(dispMap),
+	    new vercast.DummyKeyValueStore());
+	var v = yield* ostore.init('Treap', {elementType: 'atom',
+					     args: {value: ''}});
+	for(let i = 0; i < 100; i++) {
+	    v = (yield* ostore.trans(v, {_type: 'set', 
+				      _key: i, 
+				      from: '', 
+				      to: i*2})).v;
+	}
+	var depth = (yield* ostore.trans(v, {_type: '_depth'})).r;
+	assert(depth < 20, 'the depth should be less than the size');
+	for(let i = 0; i < 100; i++) {
+	    v = (yield* ostore.trans(v, {_type: 'set', 
+					 _key: i, 
+					 from: i*2, 
+					 to: ''})).v;
+	}
+	depth = (yield* ostore.trans(v, {_type: '_depth'})).r;
+	assert.equal(depth, 0);
 ```
 

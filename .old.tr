@@ -11,6 +11,12 @@
   ․ compareKeys(key1, key2) should treat prefix arrays as less than longer arrays
     compareKeys(key1, key2) should recurse to compare nested arrays
   ․ compareKeys(key1, key2) should recurse to compare nested arrays
+    Treap should apply patches to different objects, by the patch's _key attribute
+  ․ Treap should apply patches to different objects, by the patch's _key attribute
+    Treap should not count nodes containing values that match the default value
+  ․ Treap should not count nodes containing values that match the default value
+    Treap should be mostly balanced
+  ․ Treap should be mostly balanced
 
-  6 passing (11ms)
+  9 passing (592ms)
 
