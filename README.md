@@ -62,3 +62,8 @@ The map-part allows users to define functions that transform key/value pairs int
 A change can be, among other things, the addition of an element to the database, or even assigning a map function to a range of keys.
 With such a mechanism we can define de-normalization rules declaratively.
 In particular, we can define joins the way they were intended by the gods of NoSQL.
+
+Where we are At
+---------------
+
+VercastDB is a work in progress.  We will update this README file as soon as there is something to show for.
