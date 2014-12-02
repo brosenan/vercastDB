@@ -29,6 +29,12 @@
   ․ Treap _remap should call the given mapper's map patch with all the non-default values in the range
     Treap _remap should effect the patches that are returned by the mapper
   ․ Treap _remap should effect the patches that are returned by the mapper
+    Treap _remap should make future changes to the range have the effect returned by the mapper
+  ․ Treap _remap should make future changes to the range have the effect returned by the mapper
+    Treap _remap should support cases where the range is empty before creating the map
+  ․ Treap _remap should support cases where the range is empty before creating the map
+    Treap _remap should work properly even at the event of a rotation
+  ․ Treap _remap should work properly even at the event of a rotation
 
-  15 passing (1s)
+  18 passing (2s)
 

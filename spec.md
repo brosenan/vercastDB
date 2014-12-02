@@ -220,5 +220,68 @@ function* (){
 	    var seq = ostore.getSequenceStore();
 	    yield* seq.append(eff);
 	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'b'});
+	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'c'});
+```
+
+should make future changes to the range have the effect returned by the mapper.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: ['foo', 'bar'], from: '', to: 'w'});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+					     mapper: env.mapper, 
+					     keyFrom: ['foo'], 
+					     keyTo: ['foo', []]});
+	    var seq = env.ostore.getSequenceStore();
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: ['foo', 'bat'], from: '', to: 'x'});
+	    yield* seq.append(res.eff);
+	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'x'});
+
+	    // If not in range, effect should not be given
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: ['foox', 'xar'], from: '', to: 'z'});
+	    assert.equal(res.eff, '');
+```
+
+should support cases where the range is empty before creating the map.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: ['foox', 'aar'], from: '', to: 'w'});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+					     mapper: env.mapper, 
+					     keyFrom: ['foo'], 
+					     keyTo: ['foo', []]});
+	    var seq = env.ostore.getSequenceStore();
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: ['foo', 'bat'], from: '', to: 'x'});
+	    yield* seq.append(res.eff);
+	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'x'});
+```
+
+should work properly even at the event of a rotation.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: ['foo', 'baz'], from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+					     mapper: env.mapper, 
+					     keyFrom: ['foo'], 
+					     keyTo: ['foo', []]});
+	    var seq = env.ostore.getSequenceStore();
+
+	    // This one will cause a rotation and will become the new root
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: ['foo', 'bar'], from: '', to: 'y'});
+	    yield* seq.append(res.eff);
+	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'y'});
+
+	    // This will be placed a the right side of the new root, 
+	    // and will get the effect only if the new root is notified
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: ['foo', 'bat'], from: '', to: 'z'});
+	    yield* seq.append(res.eff);
+	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'z'});
 ```
 
