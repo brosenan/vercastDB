@@ -2,6 +2,7 @@
 var asyncgen = require('asyncgen');
 var crypto = require('crypto');
 var assert = require('assert');
+var vercastDB = require('./index.js');
 
 function hash(value) {
     var h = crypto.createHash('sha256');
@@ -10,9 +11,13 @@ function hash(value) {
 }
 
 exports.init = function*(ctx, args) {
+    var key = args.key;
+    if(typeof this.key === 'object') {
+	Object.freeze(key);
+    }
     this.defaultValue = args.defaultValue || (yield* ctx.init(args.elementType, args.args));
     this.value = args.value || this.defaultValue;
-    this.key = 'key' in args ? args.key : null;
+    this.key = 'key' in args ? key : null;
     this.weight = this.key ? hash(this.key) : null;
     this.left = args.left || null;
     this.leftCount = this.left ? 
@@ -30,9 +35,9 @@ exports._default = function*(ctx, p, u) {
 	this.left = yield* ctx.init(this._type, {defaultValue: this.defaultValue});
 	this.right = this.left;
 	field = 'value';
-    } else if(this.key > p._key) {
+    } else if(vercastDB.compareKeys(this.key, p._key) > 0) {
 	field = 'left';
-    } else if(this.key < p._key) {
+    } else if(vercastDB.compareKeys(this.key, p._key) < 0) {
 	field = 'right';
     } else { // ===
 	field = 'value';
@@ -49,7 +54,7 @@ exports._default = function*(ctx, p, u) {
 	    if(field === 'right') {
 		// rotate left
 		var newThis = yield* ctx.init(this._type, {
-		    key: this.key,
+		    key: ctx.clone(this.key),
 		    value: this.value,
 		    defaultValue: this.defaultValue,
 		    left: this.left,
@@ -66,7 +71,7 @@ exports._default = function*(ctx, p, u) {
 	    } else { 
 		// rotate right
 		var newThis = yield* ctx.init(this._type, {
-		    key: this.key,
+		    key: ctx.clone(this.key),
 		    value: this.value,
 		    defaultValue: this.defaultValue,
 		    left: child.right,
@@ -144,7 +149,7 @@ exports._mergeLeft = function*(ctx, p, u) {
 };
 
 exports._get = function*(ctx, p, u) {
-    return {key: this.key,
+    return {key: ctx.clone(this.key),
 	    value: this.value,
 	    weight: this.weight,
 	    right: this.right,
@@ -197,13 +202,30 @@ exports._validate = function*(ctx, p, u) {
     var left = (yield* ctx.trans(this.left, {_type: '_get'})).r;
     var right = (yield* ctx.trans(this.right, {_type: '_get'})).r;
     if(left.key !== null) {
-	assert(this.key > left.key, 'Key order: left');
+	assert(vercastDB.compareKeys(this.key, left.key) > 0, 'Key order: left');
 	assert(this.weight > left.weight, 'Heap order: left');
     }
     if(right.key !== null) {
-	assert(this.key < right.key, 'Key order: right');
+	assert(vercastDB.compareKeys(this.key, right.key) < 0, 'Key order: right');
 	assert(this.weight > right.weight, 'Heap order: right');
     }
     yield* ctx.trans(this.left, p, u);
     yield* ctx.trans(this.right, p, u);
+};
+
+exports._remap = function*(ctx, p, u) {
+    if(this.key === null) {
+	return;
+    }
+    if(vercastDB.compareKeys(p.keyFrom, this.key) < 0) {
+	yield* ctx.trans(this.left, p, u);
+    }
+    if(vercastDB.compareKeys(p.keyFrom, this.key) <= 0 && 
+       vercastDB.compareKeys(p.keyTo, this.key) > 0) {
+	yield* ctx.trans(p.mapper, {_type: 'map',
+				    key: ctx.clone(this.key)}, u);
+    }
+    if(vercastDB.compareKeys(p.keyTo, this.key) > 0) {
+	yield* ctx.trans(this.right, p, u);
+    }
 };

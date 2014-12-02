@@ -83,4 +83,32 @@ describe('Treap', function(){
 	    assert.deepEqual(keys, [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
 	}));
     });
+    describe('_remap', function(){
+	it('should call the given mapper\'s map patch with all the non-default values in the range', asyncgen.async(function*(){
+	    var myDispMap = Object.create(dispMap);
+	    var keys = [];
+	    var values = [];
+	    dispMap.myMapper = {
+		init: function*() {},
+		map: function*(ctx, p, u) {
+		    keys.push(p.key);
+		    values.push(p.value);
+		},
+	    };
+	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap));
+	    var v = yield* ostore.init('Treap', {elementType: 'atom', args:  {value: ''}});
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: 5, from: '', to: 'a'})).v;
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', 'bar'], from: '', to: 'b'})).v;
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', 'baz'], from: '', to: 'c'})).v;
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', []], from: '', to: 'd'})).v;
+	    var mapper = yield* ostore.init('myMapper', {});
+	    v = (yield* ostore.trans(v, {_type: '_remap', 
+					 mapper: mapper, 
+					 keyFrom: ['foo'] /*inclusive*/, 
+					 keyTo: ['foo', []] /*exclusive*/})).v;
+	    assert.deepEqual(keys, [['foo', 'bar'], ['foo', 'baz']]);
+	}));
+
+    });
+
 });

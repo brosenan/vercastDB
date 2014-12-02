@@ -11,6 +11,8 @@
   ․ compareKeys(key1, key2) should treat prefix arrays as less than longer arrays
     compareKeys(key1, key2) should recurse to compare nested arrays
   ․ compareKeys(key1, key2) should recurse to compare nested arrays
+    compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
+  ․ compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
     Treap should apply patches to different objects, by the patch's _key attribute
   ․ Treap should apply patches to different objects, by the patch's _key attribute
     Treap should not count nodes containing values that match the default value
@@ -23,6 +25,8 @@
   ․ Treap _keys should not give more results then the given limit, if provided
     Treap _keys should start at the given start position if given
   ․ Treap _keys should start at the given start position if given
+    Treap _remap should call the given mapper's map patch with all the non-default values in the range
+  ․ Treap _remap should call the given mapper's map patch with all the non-default values in the range
 
-  12 passing (1s)
+  14 passing (1s)
 

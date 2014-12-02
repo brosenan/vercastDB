@@ -2,6 +2,7 @@
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
    - [Treap](#treap)
      - [_keys](#treap-_keys)
+     - [_remap](#treap-_remap)
 <a name=""></a>
  
 <a name="comparekeyskey1-key2"></a>
@@ -67,6 +68,19 @@ should recurse to compare nested arrays.
 ```js
 assert.equal(vdb.compareKeys(['a', 'b', '~'], ['a', 'b', []]), -1);
 assert.equal(vdb.compareKeys(['a', 'b', []], ['a', 'b', '~']), 1);
+```
+
+should be able to compare proxies (objects with get() and set() methods) to real arrays.
+
+```js
+var obj = {};
+obj.array = [1, 2, 3];
+var monitor = new vercast.ObjectMonitor(obj);
+var proxy = monitor.proxy();
+assert.equal(vdb.compareKeys([1, 2, 3], proxy.array), 0);
+assert.equal(vdb.compareKeys(proxy.array, [1, 2, 2]), 1);
+assert.equal(vdb.compareKeys(proxy.array, [1, 2]), 1);
+assert.equal(vdb.compareKeys([1, 2, []], proxy.array), 1);
 ```
 
 <a name="treap"></a>
@@ -146,5 +160,35 @@ function* (){
 	    var keys = (yield* s.ostore.trans(s.v, {_type: '_keys',
 						    start: 90})).r;
 	    assert.deepEqual(keys, [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
+```
+
+<a name="treap-_remap"></a>
+## _remap
+should call the given mapper's map patch with all the non-default values in the range.
+
+```js
+function* (){
+	    var myDispMap = Object.create(dispMap);
+	    var keys = [];
+	    var values = [];
+	    dispMap.myMapper = {
+		init: function*() {},
+		map: function*(ctx, p, u) {
+		    keys.push(p.key);
+		    values.push(p.value);
+		},
+	    };
+	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap));
+	    var v = yield* ostore.init('Treap', {elementType: 'atom', args:  {value: ''}});
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: 5, from: '', to: 'a'})).v;
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', 'bar'], from: '', to: 'b'})).v;
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', 'baz'], from: '', to: 'c'})).v;
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', []], from: '', to: 'd'})).v;
+	    var mapper = yield* ostore.init('myMapper', {});
+	    v = (yield* ostore.trans(v, {_type: '_remap', 
+					 mapper: mapper, 
+					 keyFrom: ['foo'] /*inclusive*/, 
+					 keyTo: ['foo', []] /*exclusive*/})).v;
+	    assert.deepEqual(keys, [['foo', 'bar'], ['foo', 'baz']]);
 ```
 

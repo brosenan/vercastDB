@@ -2,7 +2,8 @@
 var assert = require('assert');
 
 var asyncgen = require('asyncgen');
-var vdb = require('vercastDB');
+var vdb = require('../index.js');
+var vercast = require('vercast');
 
 describe('compareKeys(key1, key2)', function(){
     it('should compare strings lexicographically', function(){
@@ -50,4 +51,15 @@ describe('compareKeys(key1, key2)', function(){
 	assert.equal(vdb.compareKeys(['a', 'b', '~'], ['a', 'b', []]), -1);
 	assert.equal(vdb.compareKeys(['a', 'b', []], ['a', 'b', '~']), 1);
     });
+    it('should be able to compare proxies (objects with get() and set() methods) to real arrays', function(){
+	var obj = {};
+	obj.array = [1, 2, 3];
+	var monitor = new vercast.ObjectMonitor(obj);
+	var proxy = monitor.proxy();
+	assert.equal(vdb.compareKeys([1, 2, 3], proxy.array), 0);
+	assert.equal(vdb.compareKeys(proxy.array, [1, 2, 2]), 1);
+	assert.equal(vdb.compareKeys(proxy.array, [1, 2]), 1);
+	assert.equal(vdb.compareKeys([1, 2, []], proxy.array), 1);
+    });
+
 });
