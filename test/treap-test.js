@@ -93,6 +93,7 @@ describe('Treap', function(){
 		map: function*(ctx, p, u) {
 		    keys.push(p.key);
 		    values.push(p.value);
+		    return [];
 		},
 	    };
 	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap));
@@ -107,8 +108,32 @@ describe('Treap', function(){
 					 keyFrom: ['foo'] /*inclusive*/, 
 					 keyTo: ['foo', []] /*exclusive*/})).v;
 	    assert.deepEqual(keys, [['foo', 'bar'], ['foo', 'baz']]);
+	    assert.deepEqual(values, ['b', 'c']);
+	}));
+	it('should effect the patches that are returned by the mapper', asyncgen.async(function*(){
+	    var myDispMap = Object.create(dispMap);
+	    var keys = [];
+	    var values = [];
+	    dispMap.myMapper = {
+		init: function*() {},
+		map: function*(ctx, p, u) {
+		    return [{_type: 'somePatch',
+			     value: p.value}];
+		},
+	    };
+	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap));
+	    var v = yield* ostore.init('Treap', {elementType: 'atom', args:  {value: ''}});
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', 'bar'], from: '', to: 'b'})).v;
+	    v = (yield* ostore.trans(v, {_type: 'set', _key: ['foo', 'baz'], from: '', to: 'c'})).v;
+	    var mapper = yield* ostore.init('myMapper', {});
+	    var eff = (yield* ostore.trans(v, {_type: '_remap', 
+					       mapper: mapper, 
+					       keyFrom: ['foo'], 
+					       keyTo: ['foo', []]})).eff;
+	    var seq = ostore.getSequenceStore();
+	    yield* seq.append(eff);
+	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'b'});
 	}));
 
     });
-
 });

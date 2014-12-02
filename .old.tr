@@ -27,6 +27,8 @@
   ․ Treap _keys should start at the given start position if given
     Treap _remap should call the given mapper's map patch with all the non-default values in the range
   ․ Treap _remap should call the given mapper's map patch with all the non-default values in the range
+    Treap _remap should effect the patches that are returned by the mapper
+  ․ Treap _remap should effect the patches that are returned by the mapper
 
-  14 passing (1s)
+  15 passing (1s)
 

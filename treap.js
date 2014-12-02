@@ -222,8 +222,13 @@ exports._remap = function*(ctx, p, u) {
     }
     if(vercastDB.compareKeys(p.keyFrom, this.key) <= 0 && 
        vercastDB.compareKeys(p.keyTo, this.key) > 0) {
-	yield* ctx.trans(p.mapper, {_type: 'map',
-				    key: ctx.clone(this.key)}, u);
+	var value = (yield* ctx.trans(this.value, {_type: 'get'})).r;
+	var patches = (yield* ctx.trans(p.mapper, {_type: 'map',
+						   key: ctx.clone(this.key),
+						   value: value}, u)).r;
+	for(let i = 0; i < patches.length; i++) {
+	    yield* ctx.effect(patches[i]);
+	}
     }
     if(vercastDB.compareKeys(p.keyTo, this.key) > 0) {
 	yield* ctx.trans(this.right, p, u);
