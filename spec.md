@@ -204,8 +204,12 @@ function* (){
 	    dispMap.myMapper = {
 		init: function*() {},
 		map: function*(ctx, p, u) {
-		    return [{_type: 'somePatch',
-			     value: p.value}];
+		    var patches = [];
+		    if(p.value !== '') {
+			patches.push({_type: 'somePatch',
+				      value: p.value});
+		    }
+		    return patches;
 		},
 	    };
 	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap));
@@ -283,5 +287,48 @@ function* (){
 	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: ['foo', 'bat'], from: '', to: 'z'});
 	    yield* seq.append(res.eff);
 	    assert.deepEqual(yield* seq.shift(), {_type: 'somePatch', value: 'z'});
+```
+
+should support multiple ranges.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0 /*inclusive*/, 
+						      keyTo: 2 /*exclusive*/});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						  mapper: env.mapper, 
+						  keyFrom: 1, 
+						  keyTo: 3});
+	    var seq = env.ostore.getSequenceStore();
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 0, from: '', to: 'x'});
+	    assert.equal((yield* effectPatches(seq, res.eff)).length, 1);
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 1, from: '', to: 'x'});
+	    assert.equal((yield* effectPatches(seq, res.eff)).length, 2);
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 2, from: '', to: 'x'});
+	    assert.equal((yield* effectPatches(seq, res.eff)).length, 1);
+```
+
+should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var seq = env.ostore.getSequenceStore();
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: 'x', to: 'y'});
+	    assert.deepEqual(yield* effectPatches(seq, res.eff), [{_type: 'inv', patch: {_type: 'somePatch', value: 'x'}}, 
+								  {_type: 'somePatch', value: 'y'}]);
 ```
 

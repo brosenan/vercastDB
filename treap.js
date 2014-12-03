@@ -2,6 +2,7 @@
 var asyncgen = require('asyncgen');
 var crypto = require('crypto');
 var assert = require('assert');
+var vercast = require('vercast');
 var vercastDB = require('./index.js');
 
 function hash(value) {
@@ -32,7 +33,7 @@ exports.init = function*(ctx, args) {
 };
 
 var rotateLeft = function*(self, ctx, child) {
-    rotateMapsLeft(self.maps, child.maps, child.key)
+    rotateMaps(self.maps, child.maps, child.key, 'keyTo', 1);
     var newThis = yield* ctx.init(self._type, {
 	key: ctx.clone(self.key),
 	value: self.value,
@@ -52,18 +53,8 @@ var rotateLeft = function*(self, ctx, child) {
     self._replaceWith(newChild);
 }
 
-function rotateMapsLeft(selfMaps, childMaps, childKey) {
-    var mapping = selfMaps.get('FIXME');
-    if(mapping) {
-	if(vercastDB.compareKeys(mapping.get('keyTo'), childKey) > 0) {
-	    selfMaps.put('FIXME', undefined);
-	    childMaps['FIXME'] = mapping.clone();
-	}
-    }
-}
-
 var rotateRight = function*(self, ctx, child) {
-    rotateMapsRight(self.maps, child.maps, child.key);
+    rotateMaps(self.maps, child.maps, child.key, 'keyFrom', -1);
     var newThis = yield* ctx.init(self._type, {
 	key: ctx.clone(self.key),
 	value: self.value,
@@ -83,14 +74,14 @@ var rotateRight = function*(self, ctx, child) {
     self._replaceWith(newChild);
 };
 
-function rotateMapsRight(selfMaps, childMaps, childKey) {
-    var mapping = selfMaps.get('FIXME');
-    if(mapping) {
-	if(vercastDB.compareKeys(mapping.get('keyFrom'), childKey) < 0) {
-	    selfMaps.put('FIXME', undefined);
-	    childMaps['FIXME'] = mapping.clone();
+function rotateMaps(selfMaps, childMaps, childKey, limitField, comp) {
+    selfMaps.keys().forEach(function(key) {
+	var mapping = selfMaps.get(key);
+	if(vercastDB.compareKeys(mapping[limitField], childKey) == comp) {
+	    selfMaps.put(key, undefined);
+	    childMaps[key] = mapping;
 	}
-    }
+    });
 }
 
 exports._default = function*(ctx, p, u) {
@@ -107,8 +98,9 @@ exports._default = function*(ctx, p, u) {
 	field = fieldMap[vercastDB.compareKeys(this.key, p._key)];
     }
     res = yield* ctx.trans(this[field], p, u);
+    var versionBefore = this[field];
     this[field] = res.v;
-    yield* applyMapping(this, ctx, p._key, field);
+    yield* applyMapping(this, ctx, p._key, field, versionBefore);
     if(field !== 'value') {
 	this[field + 'Count'] = 
 	    (yield* ctx.trans(this[field], {_type: '_count'})).r;
@@ -129,14 +121,21 @@ exports._default = function*(ctx, p, u) {
     return res.r;
 };
 
-function* applyMapping(self, ctx, key, field) {
-    var mapping = self.maps.get('FIXME');
-    if(mapping) { // should be for each mapping...
-	if(vercastDB.compareKeys(key, mapping.get('keyFrom')) >= 0 && vercastDB.compareKeys(key, mapping.get('keyTo')) < 0) {
-	    var value = (yield* ctx.trans(self[field], {_type: 'get', _key: key})).r;
-	    var patches = (yield* ctx.trans(mapping.get('mapper'), {_type: 'map', 
-								    key: key,
-								    value: value})).r;
+function* applyMapping(self, ctx, key, field, versionBefore) {
+    var ids = self.maps.keys();
+    for(let i = 0; i < ids.length; i++) {
+	var mapping = self.maps.get(ids[i]);
+	if(vercastDB.compareKeys(key, mapping.keyFrom) >= 0 && vercastDB.compareKeys(key, mapping.keyTo) < 0) {
+	    var newValue = (yield* ctx.trans(self[field], {_type: 'get', _key: key})).r;
+	    var oldValue = (yield* ctx.trans(versionBefore, {_type: 'get', _key: key})).r;
+	    var patches = (yield* ctx.trans(mapping.mapper, {_type: 'map', 
+							     key: key,
+							     value: oldValue})).r;
+	    patches = patches.map(function(p) {return {_type: 'inv', patch: p}});
+	    patches.reverse();
+	    patches = patches.concat((yield* ctx.trans(mapping.mapper, {_type: 'map', 
+									key: key,
+									value: newValue})).r);
 	    for(let i = 0; i < patches.length; i++) {
 		yield* ctx.effect(patches[i]);
 	    }
@@ -266,13 +265,13 @@ exports._validate = function*(ctx, p, u) {
 
 exports._remap = function*(ctx, p, u) {
     if(this.key === null) {
-	this.maps.put('FIXME', p);
+	this.maps.put(vercast.ObjectMonitor.seal(p), p);
     } else if(vercastDB.compareKeys(this.key, p.keyFrom) < 0) {
 	this.right = (yield* ctx.trans(this.right, p, u)).v;
     } else if(vercastDB.compareKeys(this.key, p.keyTo) > 0) {
 	this.left = (yield* ctx.trans(this.left, p, u)).v;
     } else {
-	this.maps.put('FIXME', p);
+	this.maps.put(vercast.ObjectMonitor.seal(p), p);
 	return yield* exports._remapRange.call(this, ctx, {
 	    _type: '_remapRange',
 	    keyFrom: p.keyFrom,
