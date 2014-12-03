@@ -39,6 +39,8 @@
   ․ Treap _remap should support multiple ranges
     Treap _remap should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value
   ․ Treap _remap should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value
+    Treap _remap should cancel the inverse and direct patch if they are equal
+  ․ Treap _remap should cancel the inverse and direct patch if they are equal
 
-  20 passing (2s)
+  21 passing (2s)
 

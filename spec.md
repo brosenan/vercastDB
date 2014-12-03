@@ -234,9 +234,9 @@ function* (){
 	    var env = yield* testEnv();
 	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: ['foo', 'bar'], from: '', to: 'w'});
 	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
-					     mapper: env.mapper, 
-					     keyFrom: ['foo'], 
-					     keyTo: ['foo', []]});
+						  mapper: env.mapper, 
+						  keyFrom: ['foo'], 
+						  keyTo: ['foo', []]});
 	    var seq = env.ostore.getSequenceStore();
 
 	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: ['foo', 'bat'], from: '', to: 'x'});
@@ -330,5 +330,22 @@ function* (){
 	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: 'x', to: 'y'});
 	    assert.deepEqual(yield* effectPatches(seq, res.eff), [{_type: 'inv', patch: {_type: 'somePatch', value: 'x'}}, 
 								  {_type: 'somePatch', value: 'y'}]);
+```
+
+should cancel the inverse and direct patch if they are equal.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var seq = env.ostore.getSequenceStore();
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: 'x', to: 'x'});
+	    assert.deepEqual(yield* effectPatches(seq, res.eff), []);
 ```
 

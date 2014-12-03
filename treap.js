@@ -128,14 +128,23 @@ function* applyMapping(self, ctx, key, field, versionBefore) {
 	if(vercastDB.compareKeys(key, mapping.keyFrom) >= 0 && vercastDB.compareKeys(key, mapping.keyTo) < 0) {
 	    var newValue = (yield* ctx.trans(self[field], {_type: 'get', _key: key})).r;
 	    var oldValue = (yield* ctx.trans(versionBefore, {_type: 'get', _key: key})).r;
-	    var patches = (yield* ctx.trans(mapping.mapper, {_type: 'map', 
+	    var invPatches = (yield* ctx.trans(mapping.mapper, {_type: 'map', 
 							     key: key,
-							     value: oldValue})).r;
-	    patches = patches.map(function(p) {return {_type: 'inv', patch: p}});
-	    patches.reverse();
-	    patches = patches.concat((yield* ctx.trans(mapping.mapper, {_type: 'map', 
-									key: key,
-									value: newValue})).r);
+							     value: oldValue})).r
+		.map(function(p) {return {_type: 'inv', patch: p}});
+	    invPatches.reverse();
+	    var directPatches = (yield* ctx.trans(mapping.mapper, {_type: 'map', 
+							       key: key,
+							       value: newValue})).r;
+	    while(invPatches.length > 0 && directPatches.length > 0) {
+		if(JSON.stringify(invPatches[0].patch) === JSON.stringify(directPatches[0])) {
+		    invPatches.shift();
+		    directPatches.shift();
+		} else {
+		    break;
+		}
+	    }
+	    var patches = invPatches.concat(directPatches);
 	    for(let i = 0; i < patches.length; i++) {
 		yield* ctx.effect(patches[i]);
 	    }
