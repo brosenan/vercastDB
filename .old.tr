@@ -53,6 +53,8 @@
   ․ Treap _remap should not conflict if given the old mapping ID (non empty case)
     Treap _remap should effect the inverse of what has been effected by a mapping when removed
   ․ Treap _remap should effect the inverse of what has been effected by a mapping when removed
+    Treap _remap should eliminate patches that do not change due to the mapping replacement
+  ․ Treap _remap should eliminate patches that do not change due to the mapping replacement
 
-  27 passing (2s)
+  28 passing (2s)
 

@@ -350,8 +350,28 @@ describe('Treap', function(){
 						      keyFrom: 0, 
 						      keyTo: 100});
 	    var seq = env.ostore.getSequenceStore();
-	    assert.deepEqual(yield* effectPatches(seq, res.eff), [{_type: 'inv', patch : {_type: 'somePatch', value: 'x'}}, 
-								  {_type: 'inv', patch : {_type: 'somePatch', value: 'y'}}]);
+	    assert.deepEqual(yield* effectPatches(seq, res.eff), 
+			     [{_type: 'inv', patch : {_type: 'somePatch', value: 'x'}}, 
+			      {_type: 'inv', patch : {_type: 'somePatch', value: 'y'}}]);
 	}));
+	it('should eliminate patches that do not change due to the mapping replacement', asyncgen.async(function*(){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var oldMapping = res.r;
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 6, from: '', to: 'y'});
+
+	    var res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, // The new mapper is identical to the old one
+						      oldMapping: oldMapping,
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var seq = env.ostore.getSequenceStore();
+	    assert.deepEqual(yield* effectPatches(seq, res.eff), []);
+	}));
+
     });
 });

@@ -121,6 +121,18 @@ exports._default = function*(ctx, p, u) {
     return res.r;
 };
 
+function cancelPatches(invPatches, directPatches) {
+    while(invPatches.length > 0 && directPatches.length > 0) {
+	if(JSON.stringify(invPatches[0].patch) === JSON.stringify(directPatches[0])) {
+	    invPatches.shift();
+	    directPatches.shift();
+	} else {
+	    break;
+	}
+    }
+    invPatches.reverse();
+    return invPatches.concat(directPatches);
+}
 function* applyMapping(self, ctx, key, field, versionBefore) {
     var ids = self.maps.keys();
     for(let i = 0; i < ids.length; i++) {
@@ -132,19 +144,10 @@ function* applyMapping(self, ctx, key, field, versionBefore) {
 							     key: key,
 							     value: oldValue})).r
 		.map(function(p) {return {_type: 'inv', patch: p}});
-	    invPatches.reverse();
 	    var directPatches = (yield* ctx.trans(mapping.get('mapper'), {_type: 'map', 
 							       key: key,
 							       value: newValue})).r;
-	    while(invPatches.length > 0 && directPatches.length > 0) {
-		if(JSON.stringify(invPatches[0].patch) === JSON.stringify(directPatches[0])) {
-		    invPatches.shift();
-		    directPatches.shift();
-		} else {
-		    break;
-		}
-	    }
-	    var patches = invPatches.concat(directPatches);
+	    var patches = cancelPatches(invPatches, directPatches);
 	    for(let i = 0; i < patches.length; i++) {
 		yield* ctx.effect(patches[i]);
 	    }
@@ -333,21 +336,22 @@ exports._remapRange = function*(ctx, p, u) {
     if(vercastDB.compareKeys(p.keyFrom, this.key) <= 0 && 
        vercastDB.compareKeys(p.keyTo, this.key) > 0) {
 	var value = (yield* ctx.trans(this.value, {_type: 'get'})).r;
-	var patches = [];
+	var invPatches = [];
+	var directPatches = [];
 	if(p.oldMapping) {
 	    var oldMapper = {$: idSplitRegex.exec(p.oldMapping)[1]};
-	    patches = (yield* ctx.trans(oldMapper, {_type: 'map',
-						    key: ctx.clone(this.key),
-						    value: value}, u)).r
+	    invPatches = (yield* ctx.trans(oldMapper, {_type: 'map',
+						       key: ctx.clone(this.key),
+						       value: value}, u)).r
 		.map(function(x) { return {_type: 'inv', patch: x}; });
-	    patches.reverse();
 	}
 	if(p.mapper) {
-	    patches = patches.concat((yield* ctx.trans(p.mapper, {
+	    directPatches = (yield* ctx.trans(p.mapper, {
 		_type: 'map',
 		key: ctx.clone(this.key),
-		value: value}, u)).r);
+		value: value}, u)).r;
 	}
+	var patches = cancelPatches(invPatches, directPatches);
 	for(let i = 0; i < patches.length; i++) {
 	    yield* ctx.effect(patches[i]);
 	}
