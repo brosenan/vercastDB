@@ -41,6 +41,18 @@
   ․ Treap _remap should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value
     Treap _remap should cancel the inverse and direct patch if they are equal
   ․ Treap _remap should cancel the inverse and direct patch if they are equal
+    Treap _remap should return the ID of the mapping as a string
+  ․ Treap _remap should return the ID of the mapping as a string
+    Treap _remap should conflict if such mapping already exists
+  ․ Treap _remap should conflict if such mapping already exists
+    Treap _remap should conflict if such mapping already exists (non-empty case)
+  ․ Treap _remap should conflict if such mapping already exists (non-empty case)
+    Treap _remap should not conflict if given the old mapping ID
+  ․ Treap _remap should not conflict if given the old mapping ID
+    Treap _remap should not conflict if given the old mapping ID (non empty case)
+  ․ Treap _remap should not conflict if given the old mapping ID (non empty case)
+    Treap _remap should effect the inverse of what has been effected by a mapping when removed
+  ․ Treap _remap should effect the inverse of what has been effected by a mapping when removed
 
-  21 passing (2s)
+  27 passing (2s)
 

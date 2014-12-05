@@ -77,9 +77,9 @@ var rotateRight = function*(self, ctx, child) {
 function rotateMaps(selfMaps, childMaps, childKey, limitField, comp) {
     selfMaps.keys().forEach(function(key) {
 	var mapping = selfMaps.get(key);
-	if(vercastDB.compareKeys(mapping[limitField], childKey) == comp) {
+	if(vercastDB.compareKeys(mapping.get(limitField), childKey) == comp) {
 	    selfMaps.put(key, undefined);
-	    childMaps[key] = mapping;
+	    childMaps[key] = mapping.clone();
 	}
     });
 }
@@ -125,15 +125,15 @@ function* applyMapping(self, ctx, key, field, versionBefore) {
     var ids = self.maps.keys();
     for(let i = 0; i < ids.length; i++) {
 	var mapping = self.maps.get(ids[i]);
-	if(vercastDB.compareKeys(key, mapping.keyFrom) >= 0 && vercastDB.compareKeys(key, mapping.keyTo) < 0) {
+	if(vercastDB.compareKeys(key, mapping.get('keyFrom')) >= 0 && vercastDB.compareKeys(key, mapping.get('keyTo')) < 0) {
 	    var newValue = (yield* ctx.trans(self[field], {_type: 'get', _key: key})).r;
 	    var oldValue = (yield* ctx.trans(versionBefore, {_type: 'get', _key: key})).r;
-	    var invPatches = (yield* ctx.trans(mapping.mapper, {_type: 'map', 
+	    var invPatches = (yield* ctx.trans(mapping.get('mapper'), {_type: 'map', 
 							     key: key,
 							     value: oldValue})).r
 		.map(function(p) {return {_type: 'inv', patch: p}});
 	    invPatches.reverse();
-	    var directPatches = (yield* ctx.trans(mapping.mapper, {_type: 'map', 
+	    var directPatches = (yield* ctx.trans(mapping.get('mapper'), {_type: 'map', 
 							       key: key,
 							       value: newValue})).r;
 	    while(invPatches.length > 0 && directPatches.length > 0) {
@@ -174,7 +174,12 @@ exports.digest = function*(ctx, p, u) {
 	digest += (yield* ctx.trans(this.left, p, u)).r;
     }
     if(this.key !== null && this.value.$ !== this.defaultValue.$) {
-	digest += this.key + '=>' + (yield* ctx.trans(this.value, p, u)).r + ';';
+	digest += this.key + '=>' + (yield* ctx.trans(this.value, p, u)).r;
+	digest += "[";
+	this.maps.keys().forEach(function(x) {
+	    digest += x + ",";
+	});
+	digest += "];";
     }
     if(this.right !== null) {
 	digest += (yield* ctx.trans(this.right, p, u)).r;
@@ -272,22 +277,51 @@ exports._validate = function*(ctx, p, u) {
     yield* ctx.trans(this.right, p, u);
 };
 
+function calculateMappingID(p) {
+    var range = [p.keyFrom, p.keyTo];
+    var rangeID = vercast.ObjectMonitor.seal(range);
+    return p.mapper ? p.mapper.$ + ':' + rangeID : '';
+}
+
+function addMapping(self, ctx, p) {
+    var id = calculateMappingID(p);
+    if(p.oldMapping) {
+	self.maps.put(p.oldMapping, undefined);
+    }
+    
+    if(self.maps.get(id)) {
+	ctx.conflict('Mapping already exists: ' + id);
+    }
+    if(id !== '') {
+	self.maps.put(id, p);
+    }
+    return id;
+}
+
 exports._remap = function*(ctx, p, u) {
+    var res;
     if(this.key === null) {
-	this.maps.put(vercast.ObjectMonitor.seal(p), p);
+	return addMapping(this, ctx, p);
     } else if(vercastDB.compareKeys(this.key, p.keyFrom) < 0) {
-	this.right = (yield* ctx.trans(this.right, p, u)).v;
+	res = yield* ctx.trans(this.right, p, u);
+	this.right = res.v;
+	return res.r;
     } else if(vercastDB.compareKeys(this.key, p.keyTo) > 0) {
-	this.left = (yield* ctx.trans(this.left, p, u)).v;
+	res = yield* ctx.trans(this.left, p, u);
+	this.left = res.v;
+	return res.r;
     } else {
-	this.maps.put(vercast.ObjectMonitor.seal(p), p);
-	return yield* exports._remapRange.call(this, ctx, {
+	yield* exports._remapRange.call(this, ctx, {
 	    _type: '_remapRange',
 	    keyFrom: p.keyFrom,
 	    keyTo: p.keyTo,
-	    mapper: p.mapper}, u);
+	    mapper: p.mapper,
+	    oldMapping: p.oldMapping}, u);
+	return addMapping(this, ctx, p);
     }
 };
+
+var idSplitRegex = /(.*):(.*)/;
 
 exports._remapRange = function*(ctx, p, u) {
     if(this.key === null) {
@@ -299,9 +333,21 @@ exports._remapRange = function*(ctx, p, u) {
     if(vercastDB.compareKeys(p.keyFrom, this.key) <= 0 && 
        vercastDB.compareKeys(p.keyTo, this.key) > 0) {
 	var value = (yield* ctx.trans(this.value, {_type: 'get'})).r;
-	var patches = (yield* ctx.trans(p.mapper, {_type: 'map',
-						   key: ctx.clone(this.key),
-						   value: value}, u)).r;
+	var patches = [];
+	if(p.oldMapping) {
+	    var oldMapper = {$: idSplitRegex.exec(p.oldMapping)[1]};
+	    patches = (yield* ctx.trans(oldMapper, {_type: 'map',
+						    key: ctx.clone(this.key),
+						    value: value}, u)).r
+		.map(function(x) { return {_type: 'inv', patch: x}; });
+	    patches.reverse();
+	}
+	if(p.mapper) {
+	    patches = patches.concat((yield* ctx.trans(p.mapper, {
+		_type: 'map',
+		key: ctx.clone(this.key),
+		value: value}, u)).r);
+	}
 	for(let i = 0; i < patches.length; i++) {
 	    yield* ctx.effect(patches[i]);
 	}

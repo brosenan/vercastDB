@@ -154,7 +154,8 @@ describe('Treap', function(){
 		    return patches;
 		},
 	    };
-	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap));
+	    var otb = new vercast.ObjectTestBed(dispMap);
+	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap)); //otb.objectStore();
 	    var v = yield* ostore.init('Treap', {elementType: 'atom', args:  {value: ''}});
 	    var mapper = yield* ostore.init('myMapper', {});
 	    return {ostore: ostore, v: v, mapper: mapper};
@@ -264,6 +265,93 @@ describe('Treap', function(){
 
 	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: 'x', to: 'x'});
 	    assert.deepEqual(yield* effectPatches(seq, res.eff), []);
+	}));
+	it('should return the ID of the mapping as a string', asyncgen.async(function*(){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    assert.equal(typeof res.r, 'string');
+	}));
+	it('should conflict if such mapping already exists', asyncgen.async(function*(){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    try {
+		res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+		assert(false, "the previous statement should fail");
+	    } catch(e) {
+		if(!e.isConflict) throw e;
+	    }
+	}));
+
+	it('should conflict if such mapping already exists (non-empty case)', asyncgen.async(function*(){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    try {
+		res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+		assert(false, "the previous statement should fail");
+	    } catch(e) {
+		if(!e.isConflict) throw e;
+	    }
+	}));
+	it('should not conflict if given the old mapping ID', asyncgen.async(function*(){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						  mapper: env.mapper, 
+						  oldMapping: res.r,
+						  keyFrom: 0, 
+						  keyTo: 100});
+	}));
+
+	it('should not conflict if given the old mapping ID (non empty case)', asyncgen.async(function*(){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						  mapper: env.mapper, 
+						  oldMapping: res.r,
+						  keyFrom: 0, 
+						  keyTo: 100});
+	}));
+
+	it('should effect the inverse of what has been effected by a mapping when removed', asyncgen.async(function*(){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var oldMapping = res.r;
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 6, from: '', to: 'y'});
+
+	    var res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      oldMapping: oldMapping, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var seq = env.ostore.getSequenceStore();
+	    assert.deepEqual(yield* effectPatches(seq, res.eff), [{_type: 'inv', patch : {_type: 'somePatch', value: 'x'}}, 
+								  {_type: 'inv', patch : {_type: 'somePatch', value: 'y'}}]);
 	}));
     });
 });

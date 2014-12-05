@@ -349,3 +349,111 @@ function* (){
 	    assert.deepEqual(yield* effectPatches(seq, res.eff), []);
 ```
 
+should return the ID of the mapping as a string.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    assert.equal(typeof res.r, 'string');
+```
+
+should conflict if such mapping already exists.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    try {
+		res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+		assert(false, "the previous statement should fail");
+	    } catch(e) {
+		if(!e.isConflict) throw e;
+	    }
+```
+
+should conflict if such mapping already exists (non-empty case).
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    try {
+		res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+		assert(false, "the previous statement should fail");
+	    } catch(e) {
+		if(!e.isConflict) throw e;
+	    }
+```
+
+should not conflict if given the old mapping ID.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						  mapper: env.mapper, 
+						  oldMapping: res.r,
+						  keyFrom: 0, 
+						  keyTo: 100});
+```
+
+should not conflict if given the old mapping ID (non empty case).
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						  mapper: env.mapper, 
+						  oldMapping: res.r,
+						  keyFrom: 0, 
+						  keyTo: 100});
+```
+
+should effect the inverse of what has been effected by a mapping when removed.
+
+```js
+function* (){
+	    var env = yield* testEnv();
+	    var res = yield* env.ostore.trans(env.v, {_type: '_remap', 
+						      mapper: env.mapper, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var oldMapping = res.r;
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 3, from: '', to: 'x'});
+	    res = yield* env.ostore.trans(res.v, {_type: 'set', _key: 6, from: '', to: 'y'});
+
+	    var res = yield* env.ostore.trans(res.v, {_type: '_remap', 
+						      oldMapping: oldMapping, 
+						      keyFrom: 0, 
+						      keyTo: 100});
+	    var seq = env.ostore.getSequenceStore();
+	    assert.deepEqual(yield* effectPatches(seq, res.eff), [{_type: 'inv', patch : {_type: 'somePatch', value: 'x'}}, 
+								  {_type: 'inv', patch : {_type: 'somePatch', value: 'y'}}]);
+```
+
