@@ -1,5 +1,6 @@
 # TOC
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
+   - [Text](#text)
    - [Treap](#treap)
      - [_keys](#treap-_keys)
      - [_remap](#treap-_remap)

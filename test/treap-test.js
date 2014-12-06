@@ -5,10 +5,7 @@ var asyncgen = require('asyncgen');
 var vercast = require('vercast');
 var vdb = require('vercastDB');
 
-var dispMap = {};
-for(var key in vercast.examples) {
-    dispMap[key] = vercast.examples[key];
-}
+var dispMap = Object.create(vercast.examples);
 dispMap.Treap = vdb.Treap;
 
 describe('Treap', function(){
@@ -155,7 +152,7 @@ describe('Treap', function(){
 		},
 	    };
 	    var otb = new vercast.ObjectTestBed(dispMap);
-	    var ostore = new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap)); //otb.objectStore();
+	    var ostore = otb.objectStore(); //new vercast.DummyObjectStore(new vercast.ObjectDispatcher(myDispMap));
 	    var v = yield* ostore.init('Treap', {elementType: 'atom', args:  {value: ''}});
 	    var mapper = yield* ostore.init('myMapper', {});
 	    return {ostore: ostore, v: v, mapper: mapper};
@@ -372,6 +369,5 @@ describe('Treap', function(){
 	    var seq = env.ostore.getSequenceStore();
 	    assert.deepEqual(yield* effectPatches(seq, res.eff), []);
 	}));
-
     });
 });

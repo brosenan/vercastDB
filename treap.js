@@ -283,28 +283,37 @@ exports._validate = function*(ctx, p, u) {
 function calculateMappingID(p) {
     var range = [p.keyFrom, p.keyTo];
     var rangeID = vercast.ObjectMonitor.seal(range);
-    return p.mapper ? p.mapper.$ + ':' + rangeID : '';
+    return p.mapper ? p.mapper.$ + ':' + rangeID : undefined;
 }
 
-function addMapping(self, ctx, p) {
-    var id = calculateMappingID(p);
-    if(p.oldMapping) {
+function addMapping(self, ctx, p, u) {
+    var newID = calculateMappingID(p);
+    var oldID = p.oldMapping;
+    if(u) {
+	var tmp = newID;
+	newID = oldID;
+	oldID = tmp;
+    }
+    if(oldID) {
+	if(!self.maps.get(oldID)) {
+	    ctx.conflict('Mapping does not exist exists: ' + oldID);
+	}
 	self.maps.put(p.oldMapping, undefined);
     }
     
-    if(self.maps.get(id)) {
-	ctx.conflict('Mapping already exists: ' + id);
+    if(newID) {
+	if(self.maps.get(newID)) {
+	    ctx.conflict('Mapping already exists: ' + newID);
+	}
+	self.maps.put(newID, p);
     }
-    if(id !== '') {
-	self.maps.put(id, p);
-    }
-    return id;
+    return newID;
 }
 
 exports._remap = function*(ctx, p, u) {
     var res;
     if(this.key === null) {
-	return addMapping(this, ctx, p);
+	return addMapping(this, ctx, p, u);
     } else if(vercastDB.compareKeys(this.key, p.keyFrom) < 0) {
 	res = yield* ctx.trans(this.right, p, u);
 	this.right = res.v;
@@ -320,7 +329,7 @@ exports._remap = function*(ctx, p, u) {
 	    keyTo: p.keyTo,
 	    mapper: p.mapper,
 	    oldMapping: p.oldMapping}, u);
-	return addMapping(this, ctx, p);
+	return addMapping(this, ctx, p, u);
     }
 };
 
