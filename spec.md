@@ -1,6 +1,10 @@
 # TOC
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
    - [Text](#text)
+     - [get](#text-get)
+     - [patch](#text-patch)
+   - [textutil](#textutil)
+     - [.revertPatches(patch)](#textutil-revertpatchespatch)
    - [Treap](#treap)
      - [_keys](#treap-_keys)
      - [_remap](#treap-_remap)
@@ -82,6 +86,44 @@ assert.equal(vdb.compareKeys([1, 2, 3], proxy.array), 0);
 assert.equal(vdb.compareKeys(proxy.array, [1, 2, 2]), 1);
 assert.equal(vdb.compareKeys(proxy.array, [1, 2]), 1);
 assert.equal(vdb.compareKeys([1, 2, []], proxy.array), 1);
+```
+
+<a name="text"></a>
+# Text
+<a name="text-get"></a>
+## get
+should return the content of the text object.
+
+```js
+function* (){
+	    var v = yield* otb.objectStore().init('Text', {text: 'Foo'});
+	    assert.equal((yield* otb.objectStore().trans(v, {_type: 'get'})).r, 'Foo');
+```
+
+<a name="text-patch"></a>
+## patch
+<a name="textutil"></a>
+# textutil
+<a name="textutil-revertpatchespatch"></a>
+## .revertPatches(patch)
+should revert a patch.
+
+```js
+var text1 = "Hello, world";
+var text2 = "Hola, mondi";
+var patches = dmp.patch_make(text1, text2);
+var patchRes = dmp.patch_apply(textutil.revertPatches(patches), text2);
+assert(patchRes[1].reduce(AND, true), 'All patches should succeed');
+assert.equal(patchRes[0], text1);
+```
+
+should handle more complex strings.
+
+```js
+testReversal('hi, who did you say you were?',
+			 'Hi, Who Did You say you Were?');
+testReversal('abcdefghijklmn\nopqrstuvwxyz',
+			 'abcdefghijkLmnopqrsTuvwxyz');
 ```
 
 <a name="treap"></a>

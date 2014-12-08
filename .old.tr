@@ -13,6 +13,13 @@
   ․ compareKeys(key1, key2) should recurse to compare nested arrays
     compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
   ․ compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
+    Text get should return the content of the text object
+  ․ Text get should return the content of the text object
+  - Text patch should apply the given patch to the text
+    textutil .revertPatches(patch) should revert a patch
+  ․ textutil .revertPatches(patch) should revert a patch
+    textutil .revertPatches(patch) should handle more complex strings
+  ․ textutil .revertPatches(patch) should handle more complex strings
     Treap should apply patches to different objects, by the patch's _key attribute
   ․ Treap should apply patches to different objects, by the patch's _key attribute
     Treap should not count nodes containing values that match the default value
@@ -56,5 +63,6 @@
     Treap _remap should eliminate patches that do not change due to the mapping replacement
   ․ Treap _remap should eliminate patches that do not change due to the mapping replacement
 
-  28 passing (2s)
+  31 passing (2s)
+  1 pending
 
