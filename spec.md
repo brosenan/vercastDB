@@ -102,6 +102,29 @@ function* (){
 
 <a name="text-patch"></a>
 ## patch
+should apply the given patch to the text.
+
+```js
+function* (){
+	    var dmp = new DiffMatchPatch();
+	    var patch = dmp.patch_make('', 'this is some text');
+	    patch = dmp.patch_toText(patch);
+	    yield* otb.trans({_type: 'patch', patch: patch});
+	    assert.equal(yield* otb.trans({_type: 'get'}), 'this is some text');
+```
+
+should report a conflict if one is detected.
+
+```js
+function* (){
+	    var dmp = new DiffMatchPatch();
+	    var patch0 = dmp.patch_toText(dmp.patch_make('', 'The answer is: '));
+	    var patch1 = dmp.patch_toText(dmp.patch_make('The answer is: ', 'The answer is: yes'));
+	    var patch2 = dmp.patch_toText(dmp.patch_make('The answer is: ', 'The answer is: no'));
+	    yield* otb.trans({_type: 'patch', patch: patch0});
+	    yield* otb.trans({_type: 'patch', patch: patch1});
+```
+
 <a name="textutil"></a>
 # textutil
 <a name="textutil-revertpatchespatch"></a>

@@ -24,12 +24,21 @@ describe('Text', function(){
 	}));
     });
     describe('patch', function(){
-	it.skip('should apply the given patch to the text', asyncgen.async(function*(){
+	it('should apply the given patch to the text', asyncgen.async(function*(){
 	    var dmp = new DiffMatchPatch();
 	    var patch = dmp.patch_make('', 'this is some text');
 	    patch = dmp.patch_toText(patch);
 	    yield* otb.trans({_type: 'patch', patch: patch});
 	    assert.equal(yield* otb.trans({_type: 'get'}), 'this is some text');
 	}));
+	it('should report a conflict if one is detected', asyncgen.async(function*(){
+	    var dmp = new DiffMatchPatch();
+	    var patch0 = dmp.patch_toText(dmp.patch_make('', 'The answer is: '));
+	    var patch1 = dmp.patch_toText(dmp.patch_make('The answer is: ', 'The answer is: yes'));
+	    var patch2 = dmp.patch_toText(dmp.patch_make('The answer is: ', 'The answer is: no'));
+	    yield* otb.trans({_type: 'patch', patch: patch0});
+	    yield* otb.trans({_type: 'patch', patch: patch1});
+	}));
+
     });
 });
