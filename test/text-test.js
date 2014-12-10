@@ -33,11 +33,27 @@ describe('Text', function(){
 	}));
 	it('should report a conflict if one is detected', asyncgen.async(function*(){
 	    var dmp = new DiffMatchPatch();
-	    var patch0 = dmp.patch_toText(dmp.patch_make('', 'The answer is: '));
-	    var patch1 = dmp.patch_toText(dmp.patch_make('The answer is: ', 'The answer is: yes'));
-	    var patch2 = dmp.patch_toText(dmp.patch_make('The answer is: ', 'The answer is: no'));
+	    var patch0 = dmp.patch_toText(dmp.patch_make('', 'The answer is: $'));
+	    var patch1 = dmp.patch_toText(dmp.patch_make('The answer is: $', 'The answer is: yes $'));
+	    var patch2 = dmp.patch_toText(dmp.patch_make('The answer is: $', 'The answer is: no $'));
 	    yield* otb.trans({_type: 'patch', patch: patch0});
 	    yield* otb.trans({_type: 'patch', patch: patch1});
+	    try {
+		yield* otb.trans({_type: 'patch', patch: patch2});
+		assert(false, 'Previous line should fail');
+	    } catch(e) {
+		if(!e.isConflict) throw e;
+	    }
+	}));
+	it('should allow merges', asyncgen.async(function*(){
+	    var dmp = new DiffMatchPatch();
+	    var patch0 = dmp.patch_toText(dmp.patch_make('', 'hello, world! how are you doing today?'));
+	    var patch1 = dmp.patch_toText(dmp.patch_make('hello, world! how are you doing today?', 'hello, WORLD! how are you doing today?'));
+	    var patch2 = dmp.patch_toText(dmp.patch_make('hello, world! how are you doing today?', 'hello, world! how are you doing TODAY?'));
+	    yield* otb.trans({_type: 'patch', patch: patch0});
+	    yield* otb.trans({_type: 'patch', patch: patch1});
+	    yield* otb.trans({_type: 'patch', patch: patch2});
+	    assert.equal(yield* otb.trans({_type: 'get'}), 'hello, WORLD! how are you doing TODAY?');
 	}));
 
     });

@@ -5,6 +5,8 @@ var dmp = new DiffMatchPatch();
 var vdb = require('./index.js');
 
 function AND(x, y) { return x && y; }
+dmp.Match_Threshold = 0;
+dmp.Patch_DeleteThreshold = 0;
 
 exports.init = function*(ctx, args) {
     this.text = args.text;
@@ -20,6 +22,7 @@ exports.patch = function*(ctx, p, u) {
 	patch = vdb.textutil.revertPatches(patch);
     }
     var res = dmp.patch_apply(patch, this.text);
+    //console.log(this.text, patch[0], res);
     if(!res[1].reduce(AND, true)) {
 	ctx.conflict("Textual conflict");
     }
