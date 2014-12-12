@@ -1,8 +1,9 @@
 # TOC
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
    - [Text](#text)
-     - [get](#text-get)
-     - [patch](#text-patch)
+     - [get{}](#text-get)
+     - [patch{patch}](#text-patchpatch)
+     - [put{value}](#text-putvalue)
    - [textutil](#textutil)
      - [.revertPatches(patch)](#textutil-revertpatchespatch)
    - [Treap](#treap)
@@ -91,7 +92,7 @@ assert.equal(vdb.compareKeys([1, 2, []], proxy.array), 1);
 <a name="text"></a>
 # Text
 <a name="text-get"></a>
-## get
+## get{}
 should return the content of the text object.
 
 ```js
@@ -100,8 +101,8 @@ function* (){
 	    assert.equal((yield* otb.objectStore().trans(v, {_type: 'get'})).r, 'Foo');
 ```
 
-<a name="text-patch"></a>
-## patch
+<a name="text-patchpatch"></a>
+## patch{patch}
 should apply the given patch to the text.
 
 ```js
@@ -143,6 +144,16 @@ function* (){
 	    yield* otb.trans({_type: 'patch', patch: patch1});
 	    yield* otb.trans({_type: 'patch', patch: patch2});
 	    assert.equal(yield* otb.trans({_type: 'get'}), 'hello, WORLD! how are you doing TODAY?');
+```
+
+<a name="text-putvalue"></a>
+## put{value}
+should modify the text to the given value.
+
+```js
+function* (){
+	    yield* otb.trans({_type: 'put', value: 'Hello, world'});
+	    assert.equal(yield* otb.trans({_type: 'get'}), 'Hello, world');
 ```
 
 <a name="textutil"></a>

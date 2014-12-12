@@ -17,13 +17,13 @@ describe('Text', function(){
     beforeEach(function() {
 	otb = new vercast.ObjectTestBed(dispMap, 'Text', {text: ''});
     });
-    describe('get', function(){
+    describe('get{}', function(){
 	it('should return the content of the text object', asyncgen.async(function*(){
 	    var v = yield* otb.objectStore().init('Text', {text: 'Foo'});
 	    assert.equal((yield* otb.objectStore().trans(v, {_type: 'get'})).r, 'Foo');
 	}));
     });
-    describe('patch', function(){
+    describe('patch{patch}', function(){
 	it('should apply the given patch to the text', asyncgen.async(function*(){
 	    var dmp = new DiffMatchPatch();
 	    var patch = dmp.patch_make('', 'this is some text');
@@ -55,6 +55,13 @@ describe('Text', function(){
 	    yield* otb.trans({_type: 'patch', patch: patch2});
 	    assert.equal(yield* otb.trans({_type: 'get'}), 'hello, WORLD! how are you doing TODAY?');
 	}));
+    });
+    describe('put{value}', function(){
+	it('should modify the text to the given value', asyncgen.async(function*(){
+	    yield* otb.trans({_type: 'put', value: 'Hello, world'});
+	    assert.equal(yield* otb.trans({_type: 'get'}), 'Hello, world');
+	}));
 
     });
+
 });

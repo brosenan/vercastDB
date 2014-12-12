@@ -28,3 +28,11 @@ exports.patch = function*(ctx, p, u) {
     }
     this.text = res[0];
 };
+
+exports.put = function*(ctx, p, u) {
+    var patch = dmp.patch_make(this.text, p.value);
+    return {_reapply: {
+	_type: 'patch',
+	patch: dmp.patch_toText(patch),
+    }};
+};
