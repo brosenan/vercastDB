@@ -56,7 +56,11 @@ describe('Treap', function(){
 	depth = (yield* s.ostore.trans(s.v, {_type: '_depth'})).r;
 	assert.equal(depth, 0);
     }));
-    describe('_keys', function(){
+    it('should add the key to _reapply patches received from the value', asyncgen.async(function*(){
+	yield* otb.trans({_type: 'put', _key: 'foo', value: 'x'});
+    }));
+
+    describe('_keys{limit?, start?}', function(){
 	it('should return a sorted list of the keys in the tree', asyncgen.async(function*(){
 	    for(let i = 0; i < 4; i++) {
 		yield* otb.trans({_type: 'set',
@@ -80,7 +84,7 @@ describe('Treap', function(){
 	    assert.deepEqual(keys, [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
 	}));
     });
-    describe('_remap', function(){
+    describe('_remap{mapper?, oldMapping?, keyFrom, keyTo}', function(){
 	it('should call the given mapper\'s map patch with all the non-default values in the range', asyncgen.async(function*(){
 	    var myDispMap = Object.create(dispMap);
 	    var keys = [];
@@ -370,4 +374,17 @@ describe('Treap', function(){
 	    assert.deepEqual(yield* effectPatches(seq, res.eff), []);
 	}));
     });
+    describe('_get_ver{_key}', function(){
+	it('should return the version ID of the value corresponding to the given key', asyncgen.async(function*(){
+	    yield* otb.trans({_type: 'put', _key: 'foo', value: 'x'});
+	    yield* otb.trans({_type: 'put', _key: 'bar', value: 'x'});
+	    assert.equal((yield* otb.trans({_type: '_get_ver', _key: 'foo'})).$, 
+			 (yield* otb.trans({_type: '_get_ver', _key: 'bar'})).$);
+	    yield* otb.trans({_type: 'put', _key: 'baz', value: 'y'});
+	    assert.notEqual((yield* otb.trans({_type: '_get_ver', _key: 'foo'})).$, 
+			    (yield* otb.trans({_type: '_get_ver', _key: 'baz'})).$);
+	}));
+
+    });
+
 });

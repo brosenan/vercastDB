@@ -86,6 +86,9 @@ function rotateMaps(selfMaps, childMaps, childKey, limitField, comp) {
 
 exports._default = function*(ctx, p, u) {
     var res, field;
+    if(!('_key' in p)) {
+	throw Error('Missing _key field in a patch on a treap');
+    }
     if(this.key === null) {
 	this.key = p._key;
 	this.weight = hash(ctx.clone(this.key));
@@ -101,7 +104,12 @@ exports._default = function*(ctx, p, u) {
     var versionBefore = this[field];
     this[field] = res.v;
     yield* applyMapping(this, ctx, p._key, field, versionBefore);
-    if(field !== 'value') {
+    if(field === 'value') {
+	if(typeof res.r === 'object' && '_reapply' in res.r) {
+	    res.r._reapply = Object.create(res.r._reapply);
+	    res.r._reapply._key = this.key;
+	}
+    } else {
 	this[field + 'Count'] = 
 	    (yield* ctx.trans(this[field], {_type: '_count'})).r;
 	// Do I need to rotate?
@@ -367,5 +375,17 @@ exports._remapRange = function*(ctx, p, u) {
     }
     if(vercastDB.compareKeys(p.keyTo, this.key) > 0) {
 	yield* ctx.trans(this.right, p, u);
+    }
+};
+
+exports._get_ver = function*(ctx, p, u) {
+    if(this.key === null) {
+	return this.defaultValue;
+    } else if(vercastDB.compareKeys(p._key, this.key) < 0) {
+	return (yield* ctx.trans(this.left, p, u)).r;
+    } else if(vercastDB.compareKeys(p._key, this.key) > 0) {
+	return (yield* ctx.trans(this.right, p, u)).r;
+    } else {
+	return this.value;
     }
 };

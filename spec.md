@@ -8,8 +8,9 @@
    - [textutil](#textutil)
      - [.revertPatches(patch)](#textutil-revertpatchespatch)
    - [Treap](#treap)
-     - [_keys](#treap-_keys)
-     - [_remap](#treap-_remap)
+     - [_keys{limit?, start?}](#treap-_keyslimit-start)
+     - [_remap{mapper?, oldMapping?, keyFrom, keyTo}](#treap-_remapmapper-oldmapping-keyfrom-keyto)
+     - [_get_ver{_key}](#treap-_get_ver_key)
 <a name=""></a>
  
 <a name="comparekeyskey1-key2"></a>
@@ -255,8 +256,15 @@ function* (){
 	assert.equal(depth, 0);
 ```
 
-<a name="treap-_keys"></a>
-## _keys
+should add the key to _reapply patches received from the value.
+
+```js
+function* (){
+	yield* otb.trans({_type: 'put', _key: 'foo', value: 'x'});
+```
+
+<a name="treap-_keyslimit-start"></a>
+## _keys{limit?, start?}
 should return a sorted list of the keys in the tree.
 
 ```js
@@ -291,8 +299,8 @@ function* (){
 	    assert.deepEqual(keys, [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
 ```
 
-<a name="treap-_remap"></a>
-## _remap
+<a name="treap-_remapmapper-oldmapping-keyfrom-keyto"></a>
+## _remap{mapper?, oldMapping?, keyFrom, keyTo}
 should call the given mapper's map patch with all the non-default values in the range.
 
 ```js
@@ -607,5 +615,20 @@ function* (){
 						      keyTo: 100});
 	    var seq = env.ostore.getSequenceStore();
 	    assert.deepEqual(yield* effectPatches(seq, res.eff), []);
+```
+
+<a name="treap-_get_ver_key"></a>
+## _get_ver{_key}
+should return the version ID of the value corresponding to the given key.
+
+```js
+function* (){
+	    yield* otb.trans({_type: 'put', _key: 'foo', value: 'x'});
+	    yield* otb.trans({_type: 'put', _key: 'bar', value: 'x'});
+	    assert.equal((yield* otb.trans({_type: '_get_ver', _key: 'foo'})).$, 
+			 (yield* otb.trans({_type: '_get_ver', _key: 'bar'})).$);
+	    yield* otb.trans({_type: 'put', _key: 'baz', value: 'y'});
+	    assert.notEqual((yield* otb.trans({_type: '_get_ver', _key: 'foo'})).$, 
+			    (yield* otb.trans({_type: '_get_ver', _key: 'baz'})).$);
 ```
 

@@ -38,43 +38,47 @@
   ․ Treap should not count nodes containing values that match the default value
     Treap should be mostly balanced
   ․ Treap should be mostly balanced
-    Treap _keys should return a sorted list of the keys in the tree
-  ․ Treap _keys should return a sorted list of the keys in the tree
-    Treap _keys should not give more results then the given limit, if provided
-  ․ Treap _keys should not give more results then the given limit, if provided
-    Treap _keys should start at the given start position if given
-  ․ Treap _keys should start at the given start position if given
-    Treap _remap should call the given mapper's map patch with all the non-default values in the range
-  ․ Treap _remap should call the given mapper's map patch with all the non-default values in the range
-    Treap _remap should effect the patches that are returned by the mapper
-  ․ Treap _remap should effect the patches that are returned by the mapper
-    Treap _remap should make future changes to the range have the effect returned by the mapper
-  ․ Treap _remap should make future changes to the range have the effect returned by the mapper
-    Treap _remap should support cases where the range is empty before creating the map
-  ․ Treap _remap should support cases where the range is empty before creating the map
-    Treap _remap should work properly even at the event of a rotation
-  ․ Treap _remap should work properly even at the event of a rotation
-    Treap _remap should support multiple ranges
-  ․ Treap _remap should support multiple ranges
-    Treap _remap should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value
-  ․ Treap _remap should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value
-    Treap _remap should cancel the inverse and direct patch if they are equal
-  ․ Treap _remap should cancel the inverse and direct patch if they are equal
-    Treap _remap should return the ID of the mapping as a string
-  ․ Treap _remap should return the ID of the mapping as a string
-    Treap _remap should conflict if such mapping already exists
-  ․ Treap _remap should conflict if such mapping already exists
-    Treap _remap should conflict if such mapping already exists (non-empty case)
-  ․ Treap _remap should conflict if such mapping already exists (non-empty case)
-    Treap _remap should not conflict if given the old mapping ID
-  ․ Treap _remap should not conflict if given the old mapping ID
-    Treap _remap should not conflict if given the old mapping ID (non empty case)
-  ․ Treap _remap should not conflict if given the old mapping ID (non empty case)
-    Treap _remap should effect the inverse of what has been effected by a mapping when removed
-  ․ Treap _remap should effect the inverse of what has been effected by a mapping when removed
-    Treap _remap should eliminate patches that do not change due to the mapping replacement
-  ․ Treap _remap should eliminate patches that do not change due to the mapping replacement
+    Treap should add the key to _reapply patches received from the value
+  ․ Treap should add the key to _reapply patches received from the value
+    Treap _keys{limit?, start?} should return a sorted list of the keys in the tree
+  ․ Treap _keys{limit?, start?} should return a sorted list of the keys in the tree
+    Treap _keys{limit?, start?} should not give more results then the given limit, if provided
+  ․ Treap _keys{limit?, start?} should not give more results then the given limit, if provided
+    Treap _keys{limit?, start?} should start at the given start position if given
+  ․ Treap _keys{limit?, start?} should start at the given start position if given
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should call the given mapper's map patch with all the non-default values in the range
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should call the given mapper's map patch with all the non-default values in the range
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should effect the patches that are returned by the mapper
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should effect the patches that are returned by the mapper
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should make future changes to the range have the effect returned by the mapper
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should make future changes to the range have the effect returned by the mapper
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should support cases where the range is empty before creating the map
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should support cases where the range is empty before creating the map
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should work properly even at the event of a rotation
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should work properly even at the event of a rotation
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should support multiple ranges
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should support multiple ranges
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should emit the inverse of the patch corresponding to the previous value before the patch corresponding to the new value
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should cancel the inverse and direct patch if they are equal
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should cancel the inverse and direct patch if they are equal
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should return the ID of the mapping as a string
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should return the ID of the mapping as a string
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should conflict if such mapping already exists
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should conflict if such mapping already exists
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should conflict if such mapping already exists (non-empty case)
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should conflict if such mapping already exists (non-empty case)
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should not conflict if given the old mapping ID
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should not conflict if given the old mapping ID
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should not conflict if given the old mapping ID (non empty case)
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should not conflict if given the old mapping ID (non empty case)
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should effect the inverse of what has been effected by a mapping when removed
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should effect the inverse of what has been effected by a mapping when removed
+    Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should eliminate patches that do not change due to the mapping replacement
+  ․ Treap _remap{mapper?, oldMapping?, keyFrom, keyTo} should eliminate patches that do not change due to the mapping replacement
+    Treap _get_ver{_key} should return the version ID of the value corresponding to the given key
+  ․ Treap _get_ver{_key} should return the version ID of the value corresponding to the given key
 
-  37 passing (2s)
+  39 passing (3s)
   1 pending
 
