@@ -1,5 +1,6 @@
 # TOC
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
+   - [.loadModule(ctx, rootID, key) [async]](#loadmodulectx-rootid-key-async)
    - [Text](#text)
      - [get{}](#text-get)
      - [patch{patch}](#text-patchpatch)
@@ -87,6 +88,37 @@ assert.equal(vdb.compareKeys([1, 2, 3], proxy.array), 0);
 assert.equal(vdb.compareKeys(proxy.array, [1, 2, 2]), 1);
 assert.equal(vdb.compareKeys(proxy.array, [1, 2]), 1);
 assert.equal(vdb.compareKeys([1, 2, []], proxy.array), 1);
+```
+
+<a name="loadmodulectx-rootid-key-async"></a>
+# .loadModule(ctx, rootID, key) [async]
+should return a module for the given Javascript code.
+
+```js
+function* (){
+	var ostore = createOStore(function*(ctx, p, u) {
+	    var module = yield* vdb.loadModule(ctx, p.tree, ['scripts', 'foo.js']);
+	    return module.foo();
+	});
+	var tree = yield* ostore.init('Treap', {elementType: 'atom', args: {value: ''}});
+	tree = (yield* ostore.trans(tree, {_type: 'set', 
+					   _key: ['scripts', 'foo.js'],
+					   from: '', 
+					   to: 'exports.foo = function() { return "FOO"; };'})).v;
+	var test = yield* ostore.init('test', {});
+	var res = yield* ostore.trans(test, {_type: 'test', tree: tree});
+	assert.equal(res.r, 'FOO');
+```
+
+should not give the module access to gloabls.
+
+```js
+function* (){
+	try {
+	    yield* testModule('exports.foo = function() { process.exit(); };');
+	} catch(e) {
+	    assert.equal(e.message, "Cannot read property 'exit' of undefined");
+	}
 ```
 
 <a name="text"></a>

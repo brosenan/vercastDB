@@ -13,6 +13,11 @@
   ․ compareKeys(key1, key2) should recurse to compare nested arrays
     compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
   ․ compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
+    .loadModule(ctx, rootID, key) [async] should return a module for the given Javascript code
+  ․ .loadModule(ctx, rootID, key) [async] should return a module for the given Javascript code
+    .loadModule(ctx, rootID, key) [async] should not give the module access to gloabls
+  ․ .loadModule(ctx, rootID, key) [async] should not give the module access to gloabls
+  - .loadModule(ctx, rootID, key) [async] should interpret require() as loading of other modules under the same root
     Text get{} should return the content of the text object
   ․ Text get{} should return the content of the text object
     Text patch{patch} should apply the given patch to the text
@@ -70,5 +75,6 @@
     Treap _remap should eliminate patches that do not change due to the mapping replacement
   ․ Treap _remap should eliminate patches that do not change due to the mapping replacement
 
-  35 passing (2s)
+  37 passing (2s)
+  1 pending
 
