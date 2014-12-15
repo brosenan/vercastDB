@@ -1,5 +1,6 @@
 # TOC
    - [compareKeys(key1, key2)](#comparekeyskey1-key2)
+   - [JsMapper](#jsmapper)
    - [.loadModule(ctx, rootID, key) [async]](#loadmodulectx-rootid-key-async)
    - [Text](#text)
      - [get{}](#text-get)
@@ -89,6 +90,37 @@ assert.equal(vdb.compareKeys([1, 2, 3], proxy.array), 0);
 assert.equal(vdb.compareKeys(proxy.array, [1, 2, 2]), 1);
 assert.equal(vdb.compareKeys(proxy.array, [1, 2]), 1);
 assert.equal(vdb.compareKeys([1, 2, []], proxy.array), 1);
+```
+
+<a name="jsmapper"></a>
+# JsMapper
+should map values to patches based on Javascript code.
+
+```js
+function* (){
+	var code = [
+	    "exports.doubleToDest = function (key, val) {",
+	    "    key = ['dest'].concat(key.slice(1));    ",
+	    "    return [{_type: 'set',		     ",
+	    "	     _key: key,			     ",
+	    "	     from: '',			     ",
+	    "	     to: val * 2}];		     ",
+	    "};                                      ",
+	].join('\n');
+	yield* otb.trans({_type: 'put', _key: ['src', 'a'], value: 1});
+	yield* otb.trans({_type: 'put', _key: ['src', 'b'], value: 2});
+	yield* otb.trans({_type: 'put', _key: ['js', 'map.js'], value: code});
+	var mapper = yield* otb.objectStore().init('JsMapper', {
+	    rootID: otb.current(),
+	    key: ['js', 'map.js'],
+	    name: 'doubleToDest',
+	});
+	yield* otb.trans({_type: '_remap', 
+			  mapper: mapper,
+			  keyFrom: ['src'],
+			  keyTo: ['src', []]});
+	assert.equal(yield* otb.trans({_type: 'get', _key: ['dest', 'a']}), 2);
+	assert.equal(yield* otb.trans({_type: 'get', _key: ['dest', 'b']}), 4);
 ```
 
 <a name="loadmodulectx-rootid-key-async"></a>

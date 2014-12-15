@@ -4,3 +4,4 @@ exports.Treap = require('./treap.js');
 exports.Text = require('./text.js');
 exports.textutil = require('./textUtil.js');
 exports.loadModule = require('./jsModule.js').loadModule;
+exports.JsMapper = require('./jsMapper.js');

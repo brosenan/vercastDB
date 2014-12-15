@@ -21,6 +21,7 @@ exports.init = function*(ctx, args) {
     this.defaultValue = args.defaultValue || (yield* ctx.init(args.elementType, args.args));
     this.value = args.value || this.defaultValue;
     this.key = 'key' in args ? key : null;
+    if(this.key && this.key.__childProxies) throw Error('XXX');
     this.weight = this.key ? hash(ctx.clone(this.key)) : null;
     this.left = args.left || null;
     this.leftCount = this.left ? 
@@ -90,6 +91,9 @@ exports._default = function*(ctx, p, u) {
 	throw Error('Missing _key field in a patch on a treap');
     }
     if(this.key === null) {
+	if(p._key.__childProxies) {
+	    throw Error('YYY');
+	}
 	this.key = p._key;
 	this.weight = hash(ctx.clone(this.key));
 	this.value = this.defaultValue;
@@ -106,8 +110,12 @@ exports._default = function*(ctx, p, u) {
     yield* applyMapping(this, ctx, p._key, field, versionBefore);
     if(field === 'value') {
 	if(typeof res.r === 'object' && '_reapply' in res.r) {
-	    res.r._reapply = Object.create(res.r._reapply);
-	    res.r._reapply._key = this.key;
+	    var newPatch = Object.create(null);
+	    Object.keys(res.r._reapply).forEach(function(field) {
+		newPatch[field] = res.r._reapply[field];
+	    });
+	    newPatch._key = ctx.clone(this.key);
+	    res.r._reapply = newPatch;
 	}
     } else {
 	this[field + 'Count'] = 
@@ -124,7 +132,7 @@ exports._default = function*(ctx, p, u) {
 	}
     }
     if(field === 'value' && this.value.$ === this.defaultValue.$) {
-	yield* removeNode(this);
+	yield* removeNode(this, ctx);
     }
     return res.r;
 };
@@ -163,7 +171,7 @@ function* applyMapping(self, ctx, key, field, versionBefore) {
     }
 };
 
-function* removeNode(self) {
+function* removeNode(self, ctx) {
     if(self.rightCount === 0 && self.leftCount === 0) {
 	self.key = null;
 	self.weight = null;
@@ -174,8 +182,8 @@ function* removeNode(self) {
     } else if(self.leftCount === 0) {
 	self._replaceWith(self.right);
     } else {
-	self._replaceWith((yield* ctx.trans(this.left, {_type: "_mergeRight", 
-							with: this.right})).v);
+	self._replaceWith((yield* ctx.trans(self.left, {_type: "_mergeRight", 
+							with: self.right})).v);
     }
 }
 
@@ -256,7 +264,7 @@ exports._keys = function*(ctx, p, u) {
 	    return keys;
 	}
 	if(start <= 0) {
-	    keys.push(this.key);
+	    keys.push(ctx.clone(this.key));
 	}
 	start -= 1;
 	if('limit' in p && keys.length === p.limit) {

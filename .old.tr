@@ -13,6 +13,8 @@
   ․ compareKeys(key1, key2) should recurse to compare nested arrays
     compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
   ․ compareKeys(key1, key2) should be able to compare proxies (objects with get() and set() methods) to real arrays
+    JsMapper should map values to patches based on Javascript code
+  ․ JsMapper should map values to patches based on Javascript code
     .loadModule(ctx, rootID, key) [async] should return a module for the given Javascript code
   ․ .loadModule(ctx, rootID, key) [async] should return a module for the given Javascript code
     .loadModule(ctx, rootID, key) [async] should not give the module access to gloabls
@@ -79,6 +81,6 @@
     Treap _get_ver{_key} should return the version ID of the value corresponding to the given key
   ․ Treap _get_ver{_key} should return the version ID of the value corresponding to the given key
 
-  39 passing (3s)
+  40 passing (3s)
   1 pending
 

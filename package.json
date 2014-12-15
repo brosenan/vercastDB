@@ -25,7 +25,7 @@
   "dependencies": {
     "asyncgen": "^1.0.6",
     "diff-match-patch": "^1.0.0",
-    "vercast": "^0.1.10"
+    "vercast": "^0.1.14"
   },
   "devDependencies": {
     "mocha": "^2.0.1"
